@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { signIn } from 'next-auth/react';
+import didaskoLogo from '@/assets/Didasko-logo.png';
+import VantaBackground from '@/components/VantaBackground';
 
 export default function Home() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,7 +21,19 @@ export default function Home() {
   return (
     <div className='flex h-screen w-screen bg-gray-100'>
       {/* Left Side - Fixed 50% */}
-      <div className='w-1/2 h-full flex items-center justify-center bg-blue-200'></div>
+      <div className='relative w-1/2 h-full flex items-center justify-center bg-transparent'>
+        <VantaBackground />
+        <div className='relative w-[600px] h-[400px] flex items-center justify-center'>
+          <h2 className='text-3xl font-bold text-white-100'>
+            <img
+              src={didaskoLogo.src}
+              alt='Didasko Logo'
+              className='w-16 h-16 mb-4'
+            />
+            Welcome to Didasko!
+          </h2>
+        </div>
+      </div>
 
       {/* Right Side - Fixed 50% */}
       <div className='w-1/2 h-full flex items-center justify-center'>
