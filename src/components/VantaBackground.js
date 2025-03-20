@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
+import * as THREE from 'three'; // Import Three.js for Vanta.js to work
 import FOG from 'vanta/dist/vanta.fog.min.js';
 
 export default function VantaBackground() {
@@ -18,21 +18,21 @@ export default function VantaBackground() {
           gyroControls: false,
           minHeight: 200.0,
           minWidth: 200.0,
-          highlightColor: 0x3f6770,
-          midtoneColor: 0x1cafb9,
-          lowlightColor: 0x443398,
-          baseColor: 0xf7f7f7,
-          blurFactor: 0.29,
-          speed: 0.9,
-          zoom: 1.4,
-          THREE,
+          highlightColor: 0x1010f, // Updated colors
+          midtoneColor: 0x1794ed,
+          lowlightColor: 0x16a4de,
+          baseColor: 0xcdd3d9,
+          blurFactor: 0.3,
+          speed: 0.1,
+          zoom: 0.4,
+          THREE, // Pass Three.js instance
         }),
       );
     }
     return () => {
-      if (vantaEffect) vantaEffect.destroy();
+      if (vantaEffect) vantaEffect.destroy(); // Cleanup
     };
   }, [vantaEffect]);
 
-  return <div ref={vantaRef} className='absolute inset-0'></div>;
+  return <div ref={vantaRef} className='absolute inset-0 z-0'></div>;
 }
