@@ -1,12 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { toast as sonnerToast, Toaster } from "sonner";
-import { Trash, Edit } from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { toast as sonnerToast, Toaster } from 'sonner';
+import { Trash, Edit, Plus } from 'lucide-react';
 
 interface NoteProps {
   id: number;
@@ -16,155 +31,254 @@ interface NoteProps {
 }
 
 export function Notes() {
-  const [notes, setNotes] = useState<NoteProps[]>([  
-    { id: 1, date: "2023-02-25", content: "Check Exams (Prelim)", subtext: "BSIT 611" },
-    { id: 2, date: "2023-02-25", content: "Prepare lesson plan", subtext: "Topic: React Hooks" },
-    { id: 3, date: "2023-02-20", content: "Meeting with Faculty", subtext: "Conference Room 2" },
+  const [notes, setNotes] = useState<NoteProps[]>([
+    {
+      id: 1,
+      date: '2024-02-25',
+      content: 'Check Exams (Prelim)',
+      subtext: 'BSIT 611',
+    },
+    {
+      id: 2,
+      date: '2024-02-25',
+      content: 'Prepare lesson plan',
+      subtext: 'Topic: React Hooks',
+    },
+    {
+      id: 3,
+      date: '2024-02-20',
+      content: 'Meeting with Faculty',
+      subtext: 'Conference Room 2',
+    },
   ]);
 
-  const [newNote, setNewNote] = useState<NoteProps>({ id: 0, date: "", content: "", subtext: "" });
+  const [newNote, setNewNote] = useState<NoteProps>({
+    id: 0,
+    date: '',
+    content: '',
+    subtext: '',
+  });
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null); // Holds ID of note to delete
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // ✅ Add or Update Note (Stack behavior - LIFO)
   const saveNote = () => {
     if (!newNote.date.trim() || !newNote.content.trim()) {
-      sonnerToast.error("Please fill in all required fields!");
+      sonnerToast.error('Please fill in all required fields!');
       return;
     }
 
-    if (editMode) {
-      setNotes((prev) => prev.map((note) => (note.id === newNote.id ? newNote : note)));
-      sonnerToast.success(`Updated note: "${newNote.content}"`);
-    } else {
-      const newId = notes.length ? Math.max(...notes.map((note) => note.id)) + 1 : 1;
-      setNotes((prev) => [{ ...newNote, id: newId }, ...prev]); // Push new note to the top
-      sonnerToast.success(`Added note: "${newNote.content}"`);
-    }
+    setNotes((prevNotes) => {
+      if (editMode) {
+        return prevNotes.map((note) =>
+          note.id === newNote.id ? newNote : note,
+        );
+      } else {
+        const newId = prevNotes.length
+          ? Math.max(...prevNotes.map((note) => note.id)) + 1
+          : 1;
+        return [...prevNotes, { ...newNote, id: newId }];
+      }
+    });
 
-    setNewNote({ id: 0, date: "", content: "", subtext: "" });
+    sonnerToast.success(
+      editMode
+        ? `Updated: "${newNote.content}"`
+        : `Added: "${newNote.content}"`,
+    );
+
+    setNewNote({ id: 0, date: '', content: '', subtext: '' });
     setOpen(false);
     setEditMode(false);
   };
 
-  // ✅ Edit Note
   const editNote = (note: NoteProps) => {
     setNewNote(note);
     setEditMode(true);
     setOpen(true);
   };
 
-  // ✅ Open Delete Confirmation
   const confirmDelete = (id: number) => {
     setDeleteId(id);
   };
 
-  // ✅ Delete Note
   const deleteNote = () => {
     if (deleteId === null) return;
-    setNotes((prev) => prev.filter((note) => note.id !== deleteId));
-    const deletedNote = notes.find((note) => note.id === deleteId);
-    if (deletedNote) {
-      sonnerToast.error(`Deleted note: "${deletedNote.content}"`);
-    }
+
+    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== deleteId));
+
+    sonnerToast.error('Note deleted!');
+
     setDeleteId(null);
   };
 
-  // ✅ Group Notes by Date (Descending Order)
-  const groupedNotes = notes.reduce((acc, note) => {
-    acc[note.date] = acc[note.date] ? [...acc[note.date], note] : [note];
-    return acc;
-  }, {} as Record<string, NoteProps[]>);
+  // ✅ Sort Notes by Date (Descending) & Group Them
+  const sortedNotes = [...notes].sort((a, b) => b.date.localeCompare(a.date));
+  const groupedNotes: Record<string, NoteProps[]> = {};
+  sortedNotes.forEach((note) => {
+    if (!groupedNotes[note.date]) {
+      groupedNotes[note.date] = [];
+    }
+    groupedNotes[note.date].push(note);
+  });
+
+  // ✅ Convert YYYY-MM-DD to "Day, Month Year" (e.g., "25 February 2024")
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth(); // 0 = January, 11 = December
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+  const startOfYear = `${currentYear}-01-01`;
+  const endOfYear =
+    currentMonth === 11 ? `${currentYear + 1}-12-31` : `${currentYear}-12-31`;
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm max-w-lg mx-auto">
-      <h2 className="text-lg font-semibold mb-4">Notes</h2>
+    <>
+      <Toaster position='top-center' />
+      <div className='bg-white rounded-lg p-4 shadow-sm max-w-lg mx-auto'>
+        <div className='flex justify-between items-center mb-4'>
+          <h2 className='text-lg font-semibold'>Notes</h2>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='w-8 h-8 rounded-full bg-[#124A69] text-white flex items-center justify-center'
+              >
+                <Plus size={16} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editMode ? 'Edit Note' : 'Add a New Note'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className='mb-2'>
+                <label className='text-sm font-medium text-gray-700'>
+                  Date <span className='text-red-500'>*</span>
+                </label>
+                <div>
+                  <Input
+                    type='date'
+                    value={newNote.date}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, date: e.target.value })
+                    }
+                    min={today} // Disables past dates
+                    onKeyDown={(e) => e.preventDefault()} // Prevents manual typing
+                    className='text-gray-900'
+                    placeholder='dd/mm/yyyy'
+                  />
+                </div>
+              </div>
+              <div className='mb-2'>
+                <label className='text-sm font-medium text-gray-700'>
+                  Title <span className='text-red-500'>*</span>
+                </label>
+                <Input
+                  type='text'
+                  placeholder='Enter title'
+                  value={newNote.content}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 15) {
+                      setNewNote({ ...newNote, content: e.target.value });
+                    }
+                  }}
+                />
+              </div>
 
-      {/* ✅ Scrollable Notes Container */}
-      <div className="max-h-[300px] overflow-y-auto space-y-6">
-        {Object.entries(groupedNotes).sort(([a], [b]) => b.localeCompare(a)).map(([date, notes]) => (
-          <div key={date}>
-            <h3 className="text-md font-bold text-gray-700 border-b pb-1 mb-2">{new Date(date).toDateString()}</h3>
-            <div className="space-y-3">
+              <div className='mb-4'>
+                <label className='text-sm font-medium text-gray-700'>
+                  Description (Optional)
+                </label>
+                <Input
+                  type='text'
+                  placeholder='Additional details'
+                  value={newNote.subtext}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 50) {
+                      setNewNote({ ...newNote, subtext: e.target.value });
+                    }
+                  }}
+                />
+              </div>
+              <Button onClick={saveNote} className='w-full'>
+                {editMode ? 'Update Note' : 'Save Note'}
+              </Button>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* ✅ Notes List Sorted by Date */}
+        <div className='max-h-80 overflow-y-auto'>
+          {Object.entries(groupedNotes).map(([date, notes]) => (
+            <div key={date} className='mb-4'>
+              <h3 className='text-md font-bold text-gray-700 border-b pb-1 mb-2'>
+                {formatDate(date)}
+              </h3>
               {notes.map((note) => (
-                <div key={note.id} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
-                  <div>
-                    <div className="font-medium">{note.content}</div>
-                    {note.subtext && <div className="text-xs text-gray-600">{note.subtext}</div>}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => editNote(note)}>
+                <div
+                  key={note.id}
+                  className='relative p-4 mb-2 border rounded-lg bg-gray-50'
+                >
+                  {/* Buttons Fixed at Top-Right */}
+                  <div className='absolute top-2 right-2 flex gap-2'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => editNote(note)}
+                    >
                       <Edit size={16} />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="icon" className="bg-black text-white hover:bg-gray-800" onClick={() => confirmDelete(note.id)}>
-                      <Trash size={16} />
-                      </Button>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => confirmDelete(note.id)}
+                        >
+                          <Trash size={16} />
+                        </Button>
                       </AlertDialogTrigger>
-                      {deleteId === note.id && (
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          </AlertDialogHeader>
-                          <p className="text-sm text-gray-600">This action cannot be undone.</p>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setDeleteId(null)}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={deleteNote} className="bg-red-500 hover:bg-red-600">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      )}
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Note?</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <p>Are you sure you want to delete this note?</p>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={deleteNote}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
                     </AlertDialog>
+                  </div>
+
+                  {/* Note Content */}
+                  <div className='w-full'>
+                    <p className='font-semibold'>{note.content}</p>
+                    {note.subtext && (
+                      <p className='text-sm text-gray-700 whitespace-pre-wrap break-words overflow-y-auto max-h-24'>
+                        {note.subtext}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-
-      {/* Add Note Button */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="mt-4 w-full">Add Note</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editMode ? "Edit Note" : "Add a New Note"}</DialogTitle>
-          </DialogHeader>
-
-          {/* Date Field */}
-          <div className="mb-2">
-            <label className="text-sm font-medium text-gray-700">Date <span className="text-red-500">*</span></label>
-            <Input type="date" min={new Date().toISOString().split("T")[0]} value={newNote.date} onChange={(e) => setNewNote({ ...newNote, date: e.target.value })} className="disabled:opacity-50" />
-          </div>
-
-
-          {/* Content Field */}
-          <div className="mb-2">
-            <label className="text-sm font-medium text-gray-700">Note Content <span className="text-red-500">*</span></label>
-            <Input type="text" placeholder="Enter note content" value={newNote.content} onChange={(e) => setNewNote({ ...newNote, content: e.target.value })} />
-          </div>
-          
-          {/* Subtext Field (Optional) */}
-          <div className="mb-4">
-            <label className="text-sm font-medium text-gray-700">Subtext (Optional)</label>
-            <Input
-              type="text"
-              placeholder="Additional details"
-              value={newNote.subtext}
-              onChange={(e) => setNewNote({ ...newNote, subtext: e.target.value })}
-            />
-          </div>
-
-          <Button onClick={saveNote} className="w-full">{editMode ? "Update Note" : "Save Note"}</Button>
-        </DialogContent>
-      </Dialog>
-
-      <Toaster position="top-right" />
-    </div>
+    </>
   );
 }
